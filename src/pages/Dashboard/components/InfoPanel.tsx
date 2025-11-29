@@ -65,20 +65,44 @@ const aggregateStats = (items: Item[]) => {
 
     // 2. Parse Protections
     if (item.protection) {
-      // Regex for "Name +Amount%" or "Name Amount%" (e.g. "Fire +5%", "Drunk 100%", "All +20%")
-      const match = item.protection.match(/^(.+?)\s?\+?(\d+)%?$/);
-      if (match) {
-        const name = match[1].trim();
-        const value = parseInt(match[2], 10);
+      const protection = item.protection.trim();
 
-        if (name.toLowerCase() === 'all') {
-          // If "All", add value to every elemental protection
-          TIBIA_ELEMENTS.forEach(element => {
-            protections[element] = (protections[element] || 0) + value;
-          });
-        } else {
-          // Specific protection (e.g. "Fire", "Drunk")
-          protections[name] = (protections[name] || 0) + value;
+      // Primeiro, verificar se é um formato múltiplo como "Ice 5, Energy -5"
+      if (protection.includes(',')) {
+        const protectionParts = protection.split(',').map(part => part.trim());
+        protectionParts.forEach(part => {
+          const match = part.match(/^([^\d+-]+)\s*([+-]?\d+)%?$/);
+          if (match) {
+            const name = match[1].trim();
+            const value = parseInt(match[2], 10); // Isso captura valores positivos e negativos
+
+            if (name.toLowerCase() === 'all') {
+              // If "All", add value to every elemental protection
+              TIBIA_ELEMENTS.forEach(element => {
+                protections[element] = (protections[element] || 0) + value;
+              });
+            } else {
+              // Specific protection (e.g. "Fire", "Drunk")
+              protections[name] = (protections[name] || 0) + value;
+            }
+          }
+        });
+      } else {
+        // Para proteções únicas, verificar o formato
+        const match = protection.match(/^([^\d+-]+)\s*([+-]?\d+)%?$/);
+        if (match) {
+          const name = match[1].trim();
+          const value = parseInt(match[2], 10); // Isso captura valores positivos e negativos
+
+          if (name.toLowerCase() === 'all') {
+            // If "All", add value to every elemental protection
+            TIBIA_ELEMENTS.forEach(element => {
+              protections[element] = (protections[element] || 0) + value;
+            });
+          } else {
+            // Specific protection (e.g. "Fire", "Drunk")
+            protections[name] = (protections[name] || 0) + value;
+          }
         }
       }
     }
@@ -271,7 +295,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ items }) => {
                     {Object.entries(protections).sort((a,b) => a[0].localeCompare(b[0])).map(([name, value]) => (
                        <div key={name} className="bg-slate-800/40 border border-slate-700/50 rounded p-2 flex items-center justify-between shadow-sm">
                           <span className="text-[9px] md:text-[10px] uppercase text-slate-400 font-bold tracking-wider">{name}</span>
-                          <span className="font-bold text-sm text-teal-300">{value}%</span>
+                          <span className={`font-bold text-sm ${value >= 0 ? 'text-teal-300' : 'text-red-300'}`}>{value}%</span>
                        </div>
                     ))}
 
@@ -302,7 +326,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ items }) => {
                       <div className="w-8 h-8 rounded bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0">
                           <img src={item.image} alt={item.name} className="w-6 h-6 object-contain pixelated" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors truncate block">
                         {item.slot === 'extra-slot' ? 'Atributos: ' : ''}
                         {item.name}
@@ -310,10 +334,10 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ items }) => {
                         {/* Bonuses in Log */}
                         <div className="flex flex-wrap gap-2 mt-0.5">
                           {item.bonus && (
-                            <span className="text-[9px] text-purple-300 bg-purple-900/30 px-1 rounded border border-purple-500/20">{item.bonus}</span>
+                            <span className="text-[9px] text-purple-300 bg-purple-900/30 px-1 rounded border border-purple-500/20 break-words">{item.bonus}</span>
                           )}
                           {item.protection && (
-                            <span className="text-[9px] text-teal-300 bg-teal-900/30 px-1 rounded border border-teal-500/20">{item.protection}</span>
+                            <span className="text-[9px] text-teal-300 bg-teal-900/30 px-1 rounded border border-teal-500/20 break-words">{item.protection}</span>
                           )}
                         </div>
                       </div>

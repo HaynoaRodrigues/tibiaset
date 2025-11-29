@@ -1,12 +1,14 @@
 import express from 'express';
 import supabase from './db';
 import { ArmorDB, CreateArmorDB, UpdateArmorDB } from '../../src/types/datatypes';
+import { etagCacheMiddleware, invalidateCache } from '../utils/globalCache';
 
 const router = express.Router();
 
 // GET /armor - Listar todos os armors
-router.get('/', async (req, res) => {
+router.get('/', etagCacheMiddleware('armor'), async (req, res) => {
   try {
+    // Esta função só será chamada se os dados não estiverem em cache
     const { data, error } = await supabase
       .from('armor')
       .select('*')
@@ -16,6 +18,10 @@ router.get('/', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // O middleware etagCacheMiddleware irá automaticamente:
+    // 1. Armazenar os dados no cache com um ETag
+    // 2. Definir o header ETag na resposta
+    // 3. Enviar os dados como JSON
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -58,6 +64,9 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // Invalidar o cache após criação
+    invalidateCache('armor');
+
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -85,6 +94,9 @@ router.put('/:id', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // Invalidar o cache após atualização
+    invalidateCache('armor');
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -105,6 +117,9 @@ router.delete('/:id', async (req, res) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
+
+    // Invalidar o cache após desativação
+    invalidateCache('armor');
 
     res.json({ message: 'Armor desativado com sucesso', data });
   } catch (err) {

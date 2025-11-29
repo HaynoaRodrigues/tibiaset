@@ -17,13 +17,9 @@ root.render(
             <DashboardPage />
           </div>
         } />
-        <Route path="/share/:id" element={
+        <Route path="/share" element={
           <div className="font-sans antialiased bg-[#0b0f19] text-slate-200 min-h-screen">
-            <ShareSetPage
-              setItems={{}}
-              vocation={null as any} // Será substituído pelos dados reais
-              setName="Set Compartilhado"
-            />
+            <ShareSetPage />
           </div>
         } />
       </Routes>

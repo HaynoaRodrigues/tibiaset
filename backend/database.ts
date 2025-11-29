@@ -2,6 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { ArmorDB } from '../../../src/types/datatypes';
 
 // Inicializar o cliente do Supabase
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'presente' : 'não definida');
+console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'presente' : 'não definida');
+
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 

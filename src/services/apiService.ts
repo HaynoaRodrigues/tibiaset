@@ -1,10 +1,9 @@
 import { Item, SlotType } from '../types/infotypes';
 
-const API_BASE_URL = 'http://localhost:5858/api';
+const API_BASE_URL = 'http://localhost:5757/api';
 
-// Cache para itens buscados
-const itemCache = new Map<string, { data: Item[], timestamp: number }>();
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 1 semana em milissegundos
+// Este serviço agora é apenas para operações que não usam SWR
+// como compartilhamento de sets, que não são itens de equipamento
 
 // Mapeamento de vocação para tipos específicos de armas
 const vocationWeaponSlots: Record<string, string[]> = {
@@ -200,18 +199,8 @@ function convertApiItemToItem(apiItem: ApiItem, slotType: SlotType): Item {
   };
 }
 
-// Função para buscar itens por tipo de slot
+// Função para buscar itens por tipo de slot - mantida para compatibilidade
 export async function fetchItemsBySlotType(slotType: SlotType): Promise<Item[]> {
-  // Gerar chave de cache
-  const cacheKey = `slot_${slotType}`;
-
-  // Verificar se há dados em cache e se ainda são válidos
-  const cached = itemCache.get(cacheKey);
-  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-    console.log(`Cache encontrado para o slot: ${slotType}`);
-    return cached.data;
-  }
-
   console.log(`Buscando itens para o slot: ${slotType}`);
   try {
     const endpoint = slotToEndpoint[slotType];
@@ -250,9 +239,6 @@ export async function fetchItemsBySlotType(slotType: SlotType): Promise<Item[]> 
     const convertedItems = activeApiItems.map(apiItem => convertApiItemToItem(apiItem, slotType));
     console.log(`Itens convertidos para o slot ${slotType}:`, convertedItems);
 
-    // Armazenar no cache
-    itemCache.set(cacheKey, { data: convertedItems, timestamp: Date.now() });
-
     return convertedItems;
   } catch (error) {
     // Verificar se o erro é do tipo "Unexpected token '<'" que indica resposta HTML
@@ -284,18 +270,8 @@ export async function fetchAllItems(): Promise<Item[]> {
   return allItems;
 }
 
-// Função para buscar itens específicos por vocação e slot
+// Função para buscar itens específicos por vocação e slot - mantida para compatibilidade
 export async function fetchItemsByVocationAndSlot(vocation: string, slotType: SlotType): Promise<Item[]> {
-  // Gerar chave de cache
-  const cacheKey = `vocation_${vocation}_slot_${slotType}`;
-
-  // Verificar se há dados em cache e se ainda são válidos
-  const cached = itemCache.get(cacheKey);
-  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-    console.log(`Cache encontrado para vocação: ${vocation} e slot: ${slotType}`);
-    return cached.data;
-  }
-
   console.log(`Buscando itens para vocação: ${vocation} e slot: ${slotType}`);
   try {
     // Obter os endpoints corretos com base na vocação e slot
@@ -371,9 +347,6 @@ export async function fetchItemsByVocationAndSlot(vocation: string, slotType: Sl
     }
 
     console.log(`Itens finais retornados: ${finalItems.length}`);
-
-    // Armazenar no cache
-    itemCache.set(cacheKey, { data: finalItems, timestamp: Date.now() });
 
     return finalItems;
   } catch (error) {

@@ -163,44 +163,25 @@ export default function DashboardPage() {
 
   const handleShareSet = async () => {
     try {
-      // Em uma implementação real, chamaríamos a API para persistir o set
-      // const response = await fetch('/api/shared-sets', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     items,
-      //     vocation: selectedVocation,
-      //     setName: 'Set Compartilhado'
-      //   })
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Falha ao compartilhar o set');
-      // }
-
-      // const result = await response.json();
-      // const shareId = result.id;
-
-      // Gerar um ID temporário para demonstração
-      const shareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-      // Armazenar os dados do set compartilhado no localStorage para demonstração
-      const sharedSets = JSON.parse(localStorage.getItem('sharedSets') || '{}');
-      sharedSets[shareId] = {
+      // Codificar os dados do set na URL
+      const setData = {
         items,
-        vocation: selectedVocation,
-        setName: 'Set Compartilhado',
-        createdAt: new Date().toISOString()
+        vocation: selectedVocation
       };
-      localStorage.setItem('sharedSets', JSON.stringify(sharedSets));
+
+      // Converter para string e codificar para URL
+      const dataString = JSON.stringify(setData);
+      const encodedData = encodeURIComponent(dataString);
+
+      // Gerar uma URL com os dados codificados
+      const generatedShareUrl = `${window.location.origin}/share?data=${encodedData}`;
 
       // Definir a URL de compartilhamento e abrir o modal
-      const generatedShareUrl = `${window.location.origin}/share/${shareId}`;
       setShareUrl(generatedShareUrl);
       setIsShareModalOpen(true);
 
       // Navegar para a página de compartilhamento
-      // navigate(`/share/${shareId}`);
+      navigate(`/share?data=${encodedData}`);
     } catch (error) {
       console.error('Erro ao compartilhar set:', error);
       alert('Erro ao compartilhar o set. Tente novamente.');

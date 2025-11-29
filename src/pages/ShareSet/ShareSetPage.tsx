@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { EquippedItems, Vocation, SlotType } from '../../types/infotypes';
 import SlotComponent from '../Dashboard/components/SlotComponent';
 import InfoPanel from '../Dashboard/components/InfoPanel';
@@ -12,63 +12,56 @@ interface ShareSetData {
   createdAt: Date;
 }
 
-// Simulação de armazenamento local para demonstração
-// Em uma aplicação real, isso viria de uma API
-const mockSharedSets: Record<string, ShareSetData> = {};
-
 const SharedSetView: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [set, setSet] = useState<ShareSetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Em uma implementação real, buscaríamos os dados da API
-    // const fetchSharedSet = async () => {
-    //   try {
-    //     const response = await fetch(`/api/shared-sets/${id}`);
-    //     if (!response.ok) throw new Error('Set não encontrado');
-    //     const data = await response.json();
-    //     setSet(data);
-    //     setLoading(false);
-    //   } catch (err) {
-    //     setError('Falha ao carregar o set compartilhado');
-    //     setLoading(false);
-    //   }
-    // };
+    const loadSharedSet = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    // Para demonstração, vamos tentar recuperar dados do localStorage ou usar dados padrão
-    const storedSets = localStorage.getItem('sharedSets');
-    const sets = storedSets ? JSON.parse(storedSets) : {};
-    
-    if (sets[id]) {
-      // Dados reais do set compartilhado (simulado via localStorage)
-      setSet({
-        items: sets[id].items,
-        vocation: sets[id].vocation,
-        setName: sets[id].setName || `Set Compartilhado - ${id}`,
-        createdAt: new Date(sets[id].createdAt)
-      });
-      setLoading(false);
-    } else {
-      // Se não encontrar, usar dados de exemplo
-      setTimeout(() => {
-        if (id) {
-          // Dados de exemplo para demonstração
-          setSet({
-            items: {},
-            vocation: Vocation.KNIGHT,
-            setName: `Set Compartilhado - ${id}`,
-            createdAt: new Date()
-          });
+        // Obter os dados codificados da URL
+        const encodedData = searchParams.get('data');
+
+        if (!encodedData) {
+          setError('Dados do set não encontrados na URL');
           setLoading(false);
-        } else {
-          setError('ID do set não especificado');
-          setLoading(false);
+          return;
         }
-      }, 500);
-    }
-  }, [id]);
+
+        // Decodificar e parsear os dados
+        const decodedData = decodeURIComponent(encodedData);
+        const parsedData = JSON.parse(decodedData);
+
+        // Verificar se os dados são válidos
+        if (!parsedData.items || !parsedData.vocation) {
+          setError('Dados do set inválidos');
+          setLoading(false);
+          return;
+        }
+
+        // Criar o objeto ShareSetData
+        setSet({
+          items: parsedData.items,
+          vocation: parsedData.vocation,
+          setName: parsedData.setName || 'Set Compartilhado',
+          createdAt: new Date()
+        });
+        setLoading(false);
+      } catch (err) {
+        console.error('Erro ao carregar set compartilhado:', err);
+        setError('Erro ao carregar o set compartilhado - dados inválidos');
+        setLoading(false);
+      }
+    };
+
+    loadSharedSet();
+  }, [searchParams]);
 
   if (loading) {
     return (
@@ -85,9 +78,12 @@ const SharedSetView: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-grid-pattern relative overflow-y-auto overflow-x-hidden">
         <div className="text-center">
           <p className="text-red-400">{error || 'Set não encontrado'}</p>
-          <a href="/" className="mt-4 px-4 py-2 bg-slate-700 text-white rounded inline-block">
+          <button
+            onClick={() => navigate('/')}
+            className="mt-4 px-4 py-2 bg-slate-700 text-white rounded inline-block cursor-pointer"
+          >
             Voltar para Dashboard
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -103,12 +99,12 @@ const SharedSetView: React.FC = () => {
         <div className="flex justify-center">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700/50 px-6 py-3 flex items-center">
             <span className="text-slate-300 text-sm mr-2">Seu próximo set pode mudar toda a sua hunt. Quer montar um?</span>
-            <a
-              href="/"
-              className="text-yellow-400 hover:text-yellow-300 text-sm font-bold underline transition-colors"
+            <button
+              onClick={() => navigate('/')}
+              className="text-yellow-400 hover:text-yellow-300 text-sm font-bold underline transition-colors bg-transparent border-none cursor-pointer"
             >
               Comece agora!
-            </a>
+            </button>
           </div>
         </div>
       </nav>
@@ -258,7 +254,7 @@ const SharedSetView: React.FC = () => {
             <button
               className="px-4 py-2 text-yellow-600 hover:bg-yellow-700 text-white text-sm font-bold rounded-lg shadow-lg border border-yellow-500/50 transition-all transform hover:scale-105"
               onClick={() => {
-                const shareUrl = `${window.location.origin}/share/${id}`;
+                const shareUrl = window.location.href;
                 navigator.clipboard.writeText(shareUrl);
                 alert('Link copiado para a área de transferência!');
               }}

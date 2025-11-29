@@ -1,13 +1,15 @@
 import express from 'express';
 import supabase from './db';
 import { HelmetDB, CreateHelmetDB, UpdateHelmetDB } from '../../src/types/datatypes';
+import { etagCacheMiddleware } from '../utils/globalCache';
 
 const router = express.Router();
 
 // GET /helmet - Listar todos os helmets
-router.get('/', async (req, res) => {
+router.get('/', etagCacheMiddleware('helmet'), async (req, res) => {
   console.log('Rota GET /helmet acionada');
   try {
+    // Esta função só será chamada se os dados não estiverem em cache
     const { data, error } = await supabase
       .from('helmet')
       .select('*')
@@ -20,6 +22,10 @@ router.get('/', async (req, res) => {
     }
 
     console.log(`Encontrados ${data?.length || 0} helmets`);
+    // O middleware etagCacheMiddleware irá automaticamente:
+    // 1. Armazenar os dados no cache com um ETag
+    // 2. Definir o header ETag na resposta
+    // 3. Enviar os dados como JSON
     res.json(data);
   } catch (err) {
     console.error('Erro interno do servidor ao buscar helmets:', err);
@@ -63,6 +69,9 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // Invalidar o cache após criação
+    invalidateCache('helmet');
+
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -90,6 +99,9 @@ router.put('/:id', async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
+    // Invalidar o cache após atualização
+    invalidateCache('helmet');
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -110,6 +122,9 @@ router.delete('/:id', async (req, res) => {
     if (error) {
       return res.status(500).json({ error: error.message });
     }
+
+    // Invalidar o cache após desativação
+    invalidateCache('helmet');
 
     res.json({ message: 'Helmet desativado com sucesso', data });
   } catch (err) {
