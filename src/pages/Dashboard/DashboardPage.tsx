@@ -180,8 +180,8 @@ export default function DashboardPage() {
       setShareUrl(generatedShareUrl);
       setIsShareModalOpen(true);
 
-      // Navegar para a página de compartilhamento
-      navigate(`/share?data=${encodedData}`);
+      // O botão 'Compartilhar Set' agora apenas abre o modal com a URL
+      // A navegação permanece na mesma página
     } catch (error) {
       console.error('Erro ao compartilhar set:', error);
       alert('Erro ao compartilhar o set. Tente novamente.');
