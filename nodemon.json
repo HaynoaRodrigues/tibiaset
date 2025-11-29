@@ -1,0 +1,5 @@
+{
+  "watch": ["./src", "./components", "./backend", "./vite.config.ts"],
+  "ext": "ts,tsx,js,jsx,css,html",
+  "ignore": ["dist", "node_modules", ".git"]
+}
